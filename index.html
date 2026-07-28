@@ -19,6 +19,11 @@
 body{font-family:Georgia,serif;background:#FDF3DC;color:#2C1A0A;padding-bottom:60px}
 input,select,textarea,button{font-family:Georgia,serif}
 button{touch-action:manipulation}
+@media(min-width:768px){
+  body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh;background:#8B6914;padding-bottom:0}
+  #root{width:430px;min-height:100vh;background:#FDF3DC;box-shadow:0 0 60px #0006;
+    transform:scale(1.3);transform-origin:top center;margin-top:0}
+}
 .card{background:#FFFDF7;border-radius:16px;border:1.5px solid #F5E4B8;box-shadow:0 2px 12px #C4781A18;padding:20px}
 .badge{display:inline-flex;align-items:center;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600;white-space:nowrap;margin:2px}
 .inp{width:100%;padding:9px 13px;border-radius:9px;border:1.5px solid #F5E4B8;background:#FDF3DC;color:#2C1A0A;font-size:14px;font-family:Georgia,serif;outline:none;box-sizing:border-box}
@@ -123,7 +128,7 @@ const ACTION_GROUPS=[
 // Flat list for backward compatibility
 const ACTIONS=ACTION_GROUPS.flatMap(g=>g.items);
 const MONTHS=["Ιαν","Φεβ","Μαρ","Απρ","Μάι","Ιουν","Ιουλ","Αυγ","Σεπ","Οκτ","Νοε","Δεκ"];
-const HCOLORS=[{name:"Φυσικό ξύλο",hex:"#C8A06E"},{name:"Λευκό",hex:"#F5F5F0"},{name:"Κίτρινο",hex:"#F5C800"},{name:"Μπλε",hex:"#1565C0"},{name:"Πράσινο",hex:"#2E7D32"},{name:"Κόκκινο",hex:"#C62828"},{name:"Γκρι",hex:"#757575"},{name:"Καφέ",hex:"#5D4037"},{name:"Μοβ",hex:"#6A1B9A"}];
+const HCOLORS=[{name:"Φυσικό ξύλο",hex:"#C8A06E"},{name:"Πορτοκαλί",hex:"#E65100"},{name:"Λευκό",hex:"#F5F5F0"},{name:"Κίτρινο",hex:"#F5C800"},{name:"Μπλε",hex:"#1565C0"},{name:"Πράσινο",hex:"#2E7D32"},{name:"Κόκκινο",hex:"#C62828"},{name:"Γκρι",hex:"#757575"},{name:"Καφέ",hex:"#5D4037"},{name:"Μοβ",hex:"#6A1B9A"}];
 const SYMCOL={"Φυσικό ξύλο":{bg:"#C8A06E",tc:"#1A1208",bd:"#A07040"},"Λευκό":{bg:"#F5F5F0",tc:"#1A1208",bd:"#CCC"},"Κίτρινο":{bg:"#F5C800",tc:"#1A1208",bd:"#E6A800"},"Μπλε":{bg:"#1565C0",tc:"#FFF",bd:"#0D47A1"},"Πράσινο":{bg:"#2E7D32",tc:"#FFF",bd:"#1B5E20"},"Κόκκινο":{bg:"#C62828",tc:"#FFF",bd:"#8B0000"},"Γκρι":{bg:"#757575",tc:"#FFF",bd:"#424242"},"Καφέ":{bg:"#5D4037",tc:"#FFF",bd:"#3E2723"},"Μοβ":{bg:"#6A1B9A",tc:"#FFF",bd:"#4A148C"}};
 
 // Storage
@@ -267,7 +272,9 @@ function HiveTower({hive,size,levelData,hideSymbols,hasQueenExcl,hasPropolisSiev
       const ldItem=levelData&&levelData[disp.length-1-idx];
       const inspUsed=ldItem?(+ldItem.brood||0)+(+ldItem.honey||0):null;
       const used2=inspUsed!==null?inspUsed:(+lv.frames||0);
-      const r={y:yOff,h:hh,lx,lw,bg,tc:tc(bg),used:used2,maxF,isF};
+      const fc=tc(bg);
+      const usedColor=maxF>0&&used2<maxF?"#C0392B":fc;
+      const r={y:yOff,h:hh,lx,lw,bg,tc:fc,usedColor,used:used2,maxF,isF};
       yOff+=hh;return r;
     });
     const svgEl=svg({width:w,height:towerH,viewBox:`0 0 ${w} ${towerH}`,fill:"none"},
@@ -288,7 +295,7 @@ function HiveTower({hive,size,levelData,hideSymbols,hasQueenExcl,hasPropolisSiev
       fontWeight:900,fontSize:r.isF?size*.26:size*.2,
       color:r.tc,lineHeight:1,pointerEvents:"none",whiteSpace:"nowrap",
       textShadow:"0 1px 2px #0004",zIndex:10,
-    }},r.used+"/"+r.maxF):null);
+    }},span({style:{color:r.usedColor||r.tc}},r.used),"/"+r.maxF):null);
     // Fenizol: absolute div overlay on specific level rects
     return div({style:{position:"relative",width:w,height:towerH,flexShrink:0}},
       svgEl,...overlays
@@ -316,7 +323,7 @@ function HiveTower({hive,size,levelData,hideSymbols,hasQueenExcl,hasPropolisSiev
       }},
         pct>0?div({style:{position:"absolute",bottom:0,left:0,width:pct*100+"%",height:"100%",background:bg+"88"}}):null,
         div({style:{position:"relative",zIndex:1,fontSize:RH*.6,fontWeight:700,color:tc(bg)}},
-            maxF>0?(used||"0")+"/"+maxF:rv.frames?rv.frames:(used||"—"))
+            maxF>0?[span({key:"u",style:{color:used<maxF?G.red:tc(bg)}},used||"0"),"/"+maxF]:rv.frames?rv.frames:(used||"—"))
       );
     }),
 
@@ -342,8 +349,9 @@ function HiveTower({hive,size,levelData,hideSymbols,hasQueenExcl,hasPropolisSiev
             display:"flex",alignItems:"center",justifyContent:"center",
           }},
 
-            div({style:{position:"relative",zIndex:1,fontSize:FW*.26,fontWeight:700,color:tc(bg),lineHeight:1,textShadow:"0 1px 2px #0004"}},
-              maxF>0?(used||"0")+"/"+maxF:(used>0?String(used):"—"))
+            div({style:{position:"relative",zIndex:1,fontSize:FW*.26,fontWeight:700,
+              color:tc(bg),lineHeight:1,textShadow:"0 1px 2px #0004"}},
+              maxF>0?[span({key:"u",style:{color:used<maxF?G.red:tc(bg)}},used||"0"),"/"+maxF]:(used>0?String(used):"—"))
           )
         );
       })
@@ -698,6 +706,7 @@ function renderInfoItem(item,i){
                 h("rect",{x:0,y:4,width:12,height:4,rx:1,fill:"#27AE60"})
               );
             }
+            if(item.text==="__flower__"&&item.flowerItem){const fi=item.flowerItem;const col=fi.color||"#2E7D32";return div({key:i,style:{display:"inline-flex",alignItems:"center",gap:3,flexShrink:0}},fi.type==="tree"?svg({width:16,height:18,viewBox:"0 0 16 20"},h("circle",{cx:8,cy:7,r:6,fill:col}),h("rect",{x:6,y:12,width:4,height:6,fill:"#5D4037"})):svg({width:16,height:16,viewBox:"0 0 24 24"},...[h("circle",{cx:12,cy:12,r:3,fill:"#E65100"})],...[0,60,120,180,240,300].map(a=>h("ellipse",{key:a,cx:12+7*Math.cos(a*Math.PI/180),cy:12+7*Math.sin(a*Math.PI/180),rx:3.5,ry:2,transform:"rotate("+a+" "+(12+7*Math.cos(a*Math.PI/180))+" "+(12+7*Math.sin(a*Math.PI/180))+")",fill:col}))),fi.note&&fi.note.trim()?span({style:{fontSize:9,color:G.textLight,fontStyle:"italic"}}," "+fi.note):null);}
             const isNote=item.text&&item.text.startsWith("\u270E ");
             if(!isNote){
               // Try to find action key for this label
@@ -760,6 +769,7 @@ function HiveCardInner({hive,inspections,hives,nucParentHive,nucChildHives,onSel
     // 4. Υπόλοιπες ενέργειες
     ...activeActions.filter(lbl=>lbl!=="Β. Διάφραγμα"&&lbl!=="Σίτα Πρόπολης"&&lbl!=="Θεραπεία με"&&lbl!=="Εξισορρόπηση"&&lbl!=="Παραφυάδα").map(lbl=>({text:lbl,color:G.textLight,swarmCaught:lbl==="Σμηνουργία"&&last.actions&&last.actions.swarm_sel==="Την έπιασα",fenizolVal:lbl==="Φενιζόλ"?(last.actions&&last.actions.fenizol_val||""):"",hiveLevels:lbl==="Φενιζόλ"?(hive.levels||[]):[]})),
     last.queenNotes&&last.queenNotes.trim()?{text:last.queenNotes,color:G.amber}:null,
+    ...(last&&last.flowerItems||[]).map(fi=>({text:"__flower__",flowerItem:fi})),
   ].filter(Boolean):[];
 
   return div({onClick:()=>onSelect(hive.id),style:{
@@ -987,9 +997,9 @@ function ActionGroups({f,setF,hives,globalCustom,setGlobalCustom,hiveLevels,fGlo
         btn({onClick:()=>delCustom(grpNum,a.key),style:{flex:1,padding:"4px",borderRadius:6,border:"none",background:G.red,cursor:"pointer",fontSize:10,fontWeight:700,color:"#fff",fontFamily:"Georgia,serif"}},"Διαγραφή")
       ):null,
       acts[a.key]&&a.hasLocation?div({style:{marginTop:4}},
-        h(LocalInput,{
-          value:acts[a.key+"_val"]||"",
-          onCommit:v=>setVal(a.key,v),
+        inp({
+          type:"text",value:acts[a.key+"_val"]||"",
+          onChange:e=>setVal(a.key+"_val",e.target.value),
           placeholder:"Νέα τοποθεσία...",
           style:{width:"100%",padding:"6px 10px",borderRadius:8,border:"1.5px solid "+G.amber,
             background:G.white,fontSize:13,fontFamily:"Georgia,serif",outline:"none"}
@@ -1251,7 +1261,10 @@ function InspForm({hiveName,hiveSymbol,hiveLevels,hives,globalCustom,setGlobalCu
     return Object.assign({},base,{
       queenStatus:lastInsp.queenStatus||"",queenAge:lastInsp.queenAge||"",
       queenMarkColor:lastInsp.queenMarkColor||"",queenNotes:lastInsp.queenNotes||"",
+      queenPosition:lastInsp.queenPosition||"",
       mood:lastInsp.mood||"",
+      colonyStrength:lastInsp.colonyStrength||"",
+      notes:lastInsp.notes||"",
       actions:lastInsp.actions&&typeof lastInsp.actions==="object"?Object.assign({},lastInsp.actions):{},
       feeding:lastInsp.feeding||"",treatment:lastInsp.treatment||"",
       honey:lastInsp.honey||"",brood:lastInsp.brood||"",
@@ -1261,7 +1274,8 @@ function InspForm({hiveName,hiveSymbol,hiveLevels,hives,globalCustom,setGlobalCu
       _prevLevelData:lastInsp.levelData&&lastInsp.levelData.length>0
         ?lastInsp.levelData.map(l=>({brood:l.brood||"",honey:l.honey||""}))
         :null,
-      date:today(),notes:"",
+      floorData:lastInsp.floorData?JSON.parse(JSON.stringify(lastInsp.floorData)):base.floorData,
+      date:today(),
     });
   });
   // Uncontrolled refs for text fields — never lose focus on re-render
@@ -1315,6 +1329,7 @@ function InspForm({hiveName,hiveSymbol,hiveLevels,hives,globalCustom,setGlobalCu
   const floors=(hiveData&&hiveData.levels||[]).filter(l=>l.type==="floor"||l.isFloor);
   const isMultiFloor=floors.length>1;
   const [openSec,setOpenSec]=useState("levels");
+  const [flowerColorPop,setFlowerColorPop]=useState(null);
   const [confirmDelFloor,setConfirmDelFloor]=useState(null);
   const [selFloor,setSelFloor]=useState(0); // which floor is active for multi-floor
 
@@ -1421,6 +1436,7 @@ function InspForm({hiveName,hiveSymbol,hiveLevels,hives,globalCustom,setGlobalCu
           SecBtn("queen","👑","Βασίλισσα",qa?qa.disp:null),
           SecBtn("actions","⚡","Ενέργειες",activeActionCount||null),
           SecBtn("strength","💪","Δύναμη",(isMultiFloor?(curFloorData.colonyStrength||""):(f.colonyStrength||""))||null),
+          SecBtn("flowers","🌸","Ανθοφορίες",(f.flowerItems&&f.flowerItems.length>0)?f.flowerItems.length:null),
           SecBtn("hive","🏠","Κυψέλη")
         ),
         div({style:{minHeight:"calc(92vh - 280px)",display:"flex",flexDirection:"column"}},
@@ -1694,6 +1710,71 @@ function InspForm({hiveName,hiveSymbol,hiveLevels,hives,globalCustom,setGlobalCu
             })
           )
         ):null,
+        openSec==="flowers"?(()=>{
+          const items=f.flowerItems||[];
+          const setItems=next=>setF(p=>({...p,flowerItems:next}));
+          const showColorPop=flowerColorPop;
+          const setShowColorPop=setFlowerColorPop;
+          return div({style:{marginBottom:12}},
+            div({style:{fontSize:10,fontWeight:700,color:G.textLight,marginBottom:8,letterSpacing:.5}},"ΑΝΘΟΦΟΡΙΕΣ"),
+            // Λίστα items
+            div({style:{display:"flex",flexDirection:"column",gap:8,marginBottom:8}},
+              ...items.map((item,i)=>div({key:i,style:{display:"flex",alignItems:"center",gap:8}},
+                // Τύπος (δέντρο/λουλούδι)
+                div({style:{display:"flex",gap:4}},
+                  ...[{type:"tree",svg:h("svg",{width:24,height:24,viewBox:"0 0 24 24"},
+                    h("circle",{cx:12,cy:10,r:8,fill:item.color||"#2E7D32"}),
+                    h("rect",{x:10,y:17,width:4,height:6,fill:item.color||"#2E7D32"})
+                  )},{type:"flower",svg:h("svg",{width:24,height:24,viewBox:"0 0 24 24"},
+                    h("circle",{cx:12,cy:12,r:3,fill:"#E65100"}),
+                    ...[0,60,120,180,240,300].map(a=>h("ellipse",{key:a,cx:12+7*Math.cos(a*Math.PI/180),cy:12+7*Math.sin(a*Math.PI/180),rx:3.5,ry:2,transform:"rotate("+a+" "+(12+7*Math.cos(a*Math.PI/180))+" "+(12+7*Math.sin(a*Math.PI/180))+")",fill:item.color||"#E91E63"}))
+                  )}].map(opt=>btn({key:opt.type,
+                    onTouchEnd:e=>{e.preventDefault();setItems(items.map((x,j)=>j===i?{...x,type:opt.type}:x));},
+                    onClick:e=>{if(e.pointerType!=="touch")setItems(items.map((x,j)=>j===i?{...x,type:opt.type}:x));},
+                    style:{padding:4,borderRadius:8,border:"2px solid "+(item.type===opt.type?G.amber:G.waxDark),
+                      background:item.type===opt.type?G.honey+"22":G.wax,cursor:"pointer",lineHeight:1,
+                      WebkitTapHighlightColor:"transparent"}},opt.svg))
+                ),
+                // Χρώμα
+                div({style:{position:"relative"}},
+                  btn({onTouchEnd:e=>{e.preventDefault();setShowColorPop(showColorPop===i?null:i);},
+                    onClick:e=>{if(e.pointerType!=="touch")setShowColorPop(showColorPop===i?null:i);},
+                    style:{width:30,height:30,borderRadius:"50%",border:"2px solid "+G.amber,
+                      background:item.color||"#2E7D32",cursor:"pointer",WebkitTapHighlightColor:"transparent"}}),
+                  showColorPop===i?div({style:{position:"absolute",top:36,left:0,zIndex:100,
+                    background:G.white,borderRadius:10,padding:8,boxShadow:"0 4px 16px #0003",
+                    display:"flex",flexWrap:"wrap",gap:6,width:160},
+                    onClick:e=>e.stopPropagation()},
+                    ...HCOLORS.map(c=>btn({key:c.hex,title:c.name,
+                      onTouchEnd:e=>{e.preventDefault();setItems(items.map((x,j)=>j===i?{...x,color:c.hex}:x));setShowColorPop(null);},
+                      onClick:e=>{if(e.pointerType!=="touch"){setItems(items.map((x,j)=>j===i?{...x,color:c.hex}:x));setShowColorPop(null);}},
+                      style:{width:24,height:24,borderRadius:"50%",border:"none",background:c.hex,
+                        outline:item.color===c.hex?"3px solid "+G.amber:"2px solid #0002",
+                        outlineOffset:2,cursor:"pointer",WebkitTapHighlightColor:"transparent"}}))
+                  ):null
+                ),
+                // Σημειώσεις
+                inp({type:"text",value:item.note||"",
+                  onChange:e=>setItems(items.map((x,j)=>j===i?{...x,note:e.target.value}:x)),
+                  placeholder:"Σημείωση...",
+                  style:{flex:1,padding:"5px 8px",borderRadius:8,border:"1px solid "+G.waxDark,
+                    background:G.wax,fontSize:12,fontFamily:"Georgia,serif"}}),
+                // Διαγραφή
+                btn({onTouchEnd:e=>{e.preventDefault();setItems(items.filter((_,j)=>j!==i));},
+                  onClick:e=>{if(e.pointerType!=="touch")setItems(items.filter((_,j)=>j!==i));},
+                  style:{padding:"4px 8px",borderRadius:8,border:"none",background:"#fef2f2",
+                    cursor:"pointer",fontSize:14,color:G.red,WebkitTapHighlightColor:"transparent"}},"−")
+              ))
+            ),
+            // + Προσθήκη
+            btn({onTouchEnd:e=>{e.preventDefault();setItems([...items,{type:"flower",color:"#E91E63",note:""}]);},
+              onClick:e=>{if(e.pointerType!=="touch")setItems([...items,{type:"flower",color:"#E91E63",note:""}]);},
+              style:{padding:"7px 16px",borderRadius:10,border:"1.5px dashed "+G.honey,
+                background:G.honey+"11",cursor:"pointer",fontSize:13,fontWeight:700,
+                color:G.amber,fontFamily:"Georgia,serif",WebkitTapHighlightColor:"transparent"}},
+              "+ Προσθήκη")
+          );
+        })():null,
         openSec==="hive"?h(HiveForm,{
           initial:hiveData,
           inlineMode:true,
@@ -2644,25 +2725,41 @@ function ConfirmModal({message,onConfirm,onCancel}){
 function SwipeCard({onDelete,onEdit,children}){
   const [tx,setTx]=useState(0);
   const startX=React.useRef(null);
+  const startY=React.useRef(null);
   const isDragging=React.useRef(false);
+  const isHorizontal=React.useRef(false);
   const didMove=React.useRef(false);
   const THRESHOLD=70;
+  const MIN_HORIZ=18; // ελάχιστα pixels οριζόντιας κίνησης πριν ξεκινήσει swipe
 
   function pointerDownNew(e){
-    startX.current=e.touches?e.touches[0].clientX:e.clientX;
+    const t=e.touches?e.touches[0]:e;
+    startX.current=t.clientX;
+    startY.current=t.clientY;
     isDragging.current=true;
+    isHorizontal.current=false;
     didMove.current=false;
   }
   function pointerMoveNew(e){
     if(!isDragging.current||startX.current===null)return;
-    const x=e.touches?e.touches[0].clientX:e.clientX;
-    const dx=x-startX.current;
-    if(Math.abs(dx)>4){didMove.current=true;e.stopPropagation();}
+    const t=e.touches?e.touches[0]:e;
+    const dx=t.clientX-startX.current;
+    const dy=t.clientY-startY.current;
+    // Αν δεν έχουμε κρίνει κατεύθυνση ακόμα
+    if(!isHorizontal.current){
+      if(Math.abs(dx)<MIN_HORIZ)return; // πολύ μικρό — περίμενε
+      // Αν η κατακόρυφη κίνηση είναι μεγαλύτερη, είναι scroll — άκυρο
+      if(Math.abs(dy)>Math.abs(dx)){isDragging.current=false;return;}
+      isHorizontal.current=true;
+    }
+    didMove.current=true;
+    e.stopPropagation();
     if(dx<0) setTx(Math.max(dx,-110));
     else setTx(Math.min(dx,100));
   }
   function pointerUpNew(){
     isDragging.current=false;
+    isHorizontal.current=false;
     setTx(prev=>{
       if(prev<=-THRESHOLD)return -100;
       if(prev>=70){if(didMove.current)setTimeout(()=>onEdit(),0);return 0;}
@@ -2733,6 +2830,7 @@ function InspList({insps,hiveId,hives,onEdit,onDelete}){
             insp.mood?{text:insp.mood,color:G.bark}:null,
             ...activeActions.filter(lbl=>lbl!=="\u0392. \u0394\u03b9\u03ac\u03c6\u03c1\u03b1\u03b3\u03bc\u03b1"&&lbl!=="\u03a3\u03af\u03c4\u03b1 \u03a0\u03c1\u03cc\u03c0\u03bf\u03bb\u03b7\u03c2"&&lbl!=="\u0398\u03b5\u03c1\u03b1\u03c0\u03b5\u03af\u03b1 \u03bc\u03b5"&&lbl!=="\u0395\u03be\u03b9\u03c3\u03bf\u03c1\u03c1\u03cc\u03c0\u03b7\u03c3\u03b7"&&lbl!=="\u03a0\u03b1\u03c1\u03b1\u03c6\u03c5\u03ac\u03b4\u03b1").map(lbl=>({text:lbl,color:G.textLight,swarmCaught:lbl==="\u03a3\u03bc\u03b7\u03bd\u03bf\u03c5\u03c1\u03b3\u03af\u03b1"&&insp.actions&&insp.actions.swarm_sel==="\u03a4\u03b7\u03bd \u03ad\u03c0\u03b9\u03b1\u03c3\u03b1",fenizolVal:lbl==="\u03a6\u03b5\u03bd\u03b9\u03b6\u03cc\u03bb"?(insp.actions&&insp.actions.fenizol_val||""):"",hiveLevels:lbl==="\u03a6\u03b5\u03bd\u03b9\u03b6\u03cc\u03bb"?(hive&&hive.levels||[]):[]})),
             insp.queenNotes&&insp.queenNotes.trim()?{text:insp.queenNotes,color:G.amber}:null,
+            ...(insp.flowerItems||[]).map(fi=>({text:"__flower__",flowerItem:fi})),
           ].filter(Boolean);
           const qa=insp.queenBirthdate?qAge(insp.queenBirthdate,insp.date):(insp.queenAge?qAge(insp.queenAge,insp.date):null);
           const cs=insp.colonyStrength;
@@ -2958,7 +3056,7 @@ function HarvestPanel({hives,asView,fbSaveMisc,fbWatchMisc}){
     return fbWatchMisc("harvests",data=>{setHarvests(data);});
   },[fbWatchMisc]); // null or {id,date,entries:{hiveId:frames}}
   const [confirmDel,setConfirmDel]=useState(null);
-  const [expandedId,setExpandedId]=useState(null);
+  const [expandedIds,setExpandedIds]=useState(new Set());
 
   const saveAll=next=>{setHarvests(next);try{localStorage.setItem("bk_harvests",JSON.stringify(next))}catch{}if(fbSaveMisc)fbSaveMisc("harvests",next);};
 
@@ -3006,7 +3104,7 @@ function HarvestPanel({hives,asView,fbSaveMisc,fbWatchMisc}){
     div({style:{display:"flex",flexDirection:"column",gap:8}},
       ...harvests.map(harv=>{
         const groups=locGroups();
-        const isOpen=expandedId===harv.id;
+        const isOpen=expandedIds.has(harv.id);
         const total=totalForHarvest(harv);
         return h(SwipeCard,{key:harv.id,
           onEdit:()=>{const entries={};(hives||[]).forEach(hv=>entries[hv.id]=harv.entries[hv.id]||"");setForm({id:harv.id,date:harv.date,entries,notes:harv.notes||""});},
@@ -3014,14 +3112,17 @@ function HarvestPanel({hives,asView,fbSaveMisc,fbWatchMisc}){
           div({style:{background:G.white,borderRadius:0,border:"none",borderBottom:"1px solid "+G.waxDark+"44",overflow:"hidden"}},
           // Header
           div({style:{display:"flex",alignItems:"center",gap:8,padding:"10px 12px",cursor:"pointer"},
-            onClick:()=>setExpandedId(isOpen?null:harv.id)},
+            onClick:()=>setExpandedIds(prev=>{const s=new Set(prev);if(s.has(harv.id))s.delete(harv.id);else s.add(harv.id);return s;})},
             div({style:{flex:1}},
               div({style:{fontWeight:700,fontSize:15,color:G.amber}},harv.date.split("-").reverse().join("/")),
-              div({style:{fontSize:12,color:G.textLight}},total+" πλαίσια συνολικά · "+Object.keys(harv.entries||{}).length+" / "+(hives||[]).length+" κυψέλες")
+              null
             ),
             span({style:{fontSize:12,color:G.textLight}},isOpen?"▾":"▸")
           ),
-          // Expanded details
+          harv.notes&&harv.notes.trim()?div({style:{
+            padding:"2px 12px 8px",fontSize:12,color:G.textLight,fontStyle:"italic",
+            borderLeft:"2px solid "+G.honey+"66",marginLeft:12,lineHeight:1.5
+          }},"✎ "+harv.notes):null,
           isOpen?div({style:{borderTop:"1px solid "+G.waxDark+"44",padding:"10px 12px"}},
             ...Object.entries(groups).map(([loc,locHives])=>{
               const locTotal=totalForLoc(harv,loc);
@@ -3032,7 +3133,7 @@ function HarvestPanel({hives,asView,fbSaveMisc,fbWatchMisc}){
                   span({style:{fontSize:11,fontWeight:700,color:G.amber}},"📍 "+loc),
                   span({style:{fontSize:11,fontWeight:700,color:G.bark}},locTotal+" πλαίσια")
                 ),
-                div({style:{display:"flex",flexWrap:"wrap",gap:6}},
+                div({style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:5}},
                   ...locEntries.map(hv=>
                     div({key:hv.id,style:{display:"flex",alignItems:"center",gap:4,background:G.wax,borderRadius:8,padding:"3px 8px"}},
                       h(HiveSymbols,{hive:hv,size:18}),
@@ -3046,11 +3147,7 @@ function HarvestPanel({hives,asView,fbSaveMisc,fbWatchMisc}){
             div({style:{marginTop:8,paddingTop:8,borderTop:"1px solid "+G.waxDark+"44",display:"flex",justifyContent:"flex-end"}},
               span({style:{fontSize:14,fontWeight:900,color:G.amber}},"Σύνολο: "+total+" πλαίσια")
             ),
-            harv.notes&&harv.notes.trim()?div({style:{
-              marginTop:6,fontSize:12,color:G.textLight,fontStyle:"italic",
-              borderLeft:"2px solid "+G.honey+"66",paddingLeft:8,lineHeight:1.5
-            }},"\u270E "+harv.notes):null
-          ):null
+                      ):null
           )
         );
       })
@@ -3224,6 +3321,182 @@ function HelpPanel({asView}){
 }
 
 
+// InfoPanel — Πληροφορίες
+function InfoPanel({asView,fbSaveMisc,fbWatchMisc}){
+  const [records,setRecords]=useState(()=>{try{const v=localStorage.getItem("bk_info");return v?JSON.parse(v):[]}catch{return[]}});
+  const [form,setForm]=useState(null);
+  const [confirmDel,setConfirmDel]=useState(null);
+  useEffect(()=>{
+    if(!fbWatchMisc)return;
+    const u=fbWatchMisc("info",data=>{setRecords(data);});
+    return ()=>{u&&u();};
+  },[fbWatchMisc]);
+  const saveRec=r=>{
+    const next=form.id?records.map(x=>x.id===form.id?r:x):[...records,Object.assign({},r,{id:Date.now()+""})];
+    setRecords(next);try{localStorage.setItem("bk_info",JSON.stringify(next))}catch{}if(fbSaveMisc)fbSaveMisc("info",next);
+    setForm(null);
+  };
+  const delRec=id=>{
+    const next=records.filter(x=>x.id!==id);
+    setRecords(next);try{localStorage.setItem("bk_info",JSON.stringify(next))}catch{}if(fbSaveMisc)fbSaveMisc("info",next);
+    setConfirmDel(null);
+  };
+  const emptyForm={title:"",notes:"",id:null};
+  return div({style:asView?{padding:"0 0 80px",background:G.wax,minHeight:"100%"}:{position:"fixed",inset:0,zIndex:500,background:"#0006",display:"flex",alignItems:"flex-end",justifyContent:"center"}},
+    div({style:asView?{padding:"8px 4px"}:{background:G.white,borderRadius:"20px 20px 0 0",padding:"16px 16px 40px",width:"100%",maxWidth:720,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 -8px 32px #0004"}},
+      div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+        div({style:{fontWeight:900,fontSize:18,color:G.amber}},"\ud83d\udccc \u03a0\u03bb\u03b7\u03c1\u03bf\u03c6\u03bf\u03c1\u03af\u03b5\u03c2"),
+        btn({onTouchEnd:e=>{e.preventDefault();setForm({...emptyForm});},onClick:e=>{if(e.pointerType!=="touch")setForm({...emptyForm});},
+          style:{padding:"5px 12px",borderRadius:8,border:"1.5px solid "+G.honey,background:"transparent",cursor:"pointer",fontWeight:700,fontSize:13,color:G.amber,fontFamily:"Georgia,serif",WebkitTapHighlightColor:"transparent"}},"+ \u039d\u03ad\u03b1")
+      ),
+      records.length===0?div({style:{textAlign:"center",padding:"40px 0",color:G.textLight,fontSize:13}},"\u0394\u03b5\u03bd \u03c5\u03c0\u03ac\u03c1\u03c7\u03bf\u03c5\u03bd \u03ba\u03b1\u03c4\u03b1\u03b3\u03c1\u03b1\u03c6\u03ad\u03c2 \u03b1\u03ba\u03cc\u03bc\u03b1."):null,
+      div({style:{display:"flex",flexDirection:"column",gap:8}},
+        ...records.map(r=>h(SwipeCard,{key:r.id,onDelete:()=>setConfirmDel(r.id),onEdit:()=>setForm({...r})},
+          div({style:{padding:"10px 14px",background:G.white,borderRadius:10,border:"1px solid "+G.honey+"66"}},
+            r.title?div({style:{fontSize:14,fontWeight:700,color:G.text,marginBottom:4}},r.title):null,
+            r.notes&&r.notes.trim()?div({style:{fontSize:12,color:G.textLight,lineHeight:1.5,whiteSpace:"pre-wrap"}},r.notes):null
+          )
+        ))
+      ),
+      form?div({style:{position:"fixed",inset:0,zIndex:700,background:"#0007",display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:()=>setForm(null)},
+        div({style:{background:G.white,borderRadius:"20px 20px 0 0",padding:"20px",width:"100%",maxWidth:720,boxShadow:"0 -8px 32px #0004"},onClick:e=>e.stopPropagation()},
+          div({style:{fontWeight:800,fontSize:16,color:G.amber,marginBottom:14}},form.id?"\u270f\ufe0f \u0395\u03c0\u03b5\u03be\u03b5\u03c1\u03b3\u03b1\u03c3\u03af\u03b1":"\ud83d\udccc \u039d\u03ad\u03b1 \u0395\u03b3\u03b3\u03c1\u03b1\u03c6\u03ae"),
+          div({style:{marginBottom:10}},
+            div({style:{fontSize:11,fontWeight:700,color:G.textLight,marginBottom:4}},"\u03a4\u03af\u03c4\u03bb\u03bf\u03c2"),
+            inp({type:"text",value:form.title||"",onChange:e=>setForm(p=>({...p,title:e.target.value})),
+              placeholder:"\u03a4\u03af\u03c4\u03bb\u03bf\u03c2...",autoFocus:true,
+              style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid "+G.amber,background:G.wax,fontSize:14,fontFamily:"Georgia,serif"}})
+          ),
+          div({style:{marginBottom:16}},
+            div({style:{fontSize:11,fontWeight:700,color:G.textLight,marginBottom:4}},"\u03a3\u03b7\u03bc\u03b5\u03b9\u03ce\u03c3\u03b5\u03b9\u03c2"),
+            h("textarea",{value:form.notes||"",onChange:e=>setForm(p=>({...p,notes:e.target.value})),
+              rows:6,placeholder:"\u03a3\u03b7\u03bc\u03b5\u03b9\u03ce\u03c3\u03b5\u03b9\u03c2...",
+              style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid "+G.waxDark,background:G.wax,fontSize:13,fontFamily:"Georgia,serif",resize:"vertical"}})
+          ),
+          div({style:{display:"flex",gap:10}},
+            btn({onClick:()=>setForm(null),style:{flex:1,padding:"12px",borderRadius:10,border:"1px solid "+G.waxDark,background:G.white,cursor:"pointer",fontWeight:700,fontSize:14,color:G.textLight,fontFamily:"Georgia,serif"}},"\u0391\u03ba\u03cd\u03c1\u03c9\u03c3\u03b7"),
+            btn({onClick:()=>{if(!form.title&&!form.notes)return;saveRec(form);},
+              style:{flex:2,padding:"12px",borderRadius:10,border:"none",background:G.honey,cursor:"pointer",fontWeight:700,fontSize:14,color:G.beeBlack,fontFamily:"Georgia,serif"}},"\ud83d\udcbe \u0391\u03c0\u03bf\u03b8\u03ae\u03ba\u03b5\u03c5\u03c3\u03b7")
+          )
+        )
+      ):null,
+      confirmDel?div({style:{position:"fixed",inset:0,zIndex:800,background:"#0007",display:"flex",alignItems:"center",justifyContent:"center"}},
+        div({style:{background:G.white,borderRadius:16,padding:"24px",maxWidth:300,width:"90%",textAlign:"center"}},
+          div({style:{fontSize:32,marginBottom:8}},"\ud83d\uddd1"),
+          div({style:{fontWeight:700,fontSize:15,marginBottom:16,color:G.text}},"\u0394\u03b9\u03b1\u03b3\u03c1\u03b1\u03c6\u03ae \u03b5\u03b3\u03b3\u03c1\u03b1\u03c6\u03ae\u03c2;"),
+          div({style:{display:"flex",gap:10}},
+            btn({onClick:()=>setConfirmDel(null),style:{flex:1,padding:"10px",borderRadius:8,border:"1px solid "+G.waxDark,background:G.white,cursor:"pointer",fontWeight:700,color:G.textLight,fontFamily:"Georgia,serif"}},"\u0386\u03ba\u03c5\u03c1\u03bf"),
+            btn({onClick:()=>delRec(confirmDel),style:{flex:1,padding:"10px",borderRadius:8,border:"none",background:G.red,cursor:"pointer",fontWeight:700,color:"#fff",fontFamily:"Georgia,serif"}},"\u0394\u03b9\u03b1\u03b3\u03c1\u03b1\u03c6\u03ae")
+          )
+        )
+      ):null
+    )
+  );
+}
+
+// DiaryPanel — Ημερολόγιο
+function DiaryPanel({asView,fbSaveMisc,fbWatchMisc}){
+  const [records,setRecords]=useState(()=>{try{const v=localStorage.getItem("bk_diary");return v?JSON.parse(v):[]}catch{return[]}});
+  const [form,setForm]=useState(null);
+  const [confirmDel,setConfirmDel]=useState(null);
+  useEffect(()=>{
+    if(!fbWatchMisc)return;
+    const u=fbWatchMisc("diary",data=>{setRecords(data);});
+    return ()=>{u&&u();};
+  },[fbWatchMisc]);
+  const saveRec=r=>{
+    const next=form.id?records.map(x=>x.id===form.id?r:x):[...records,Object.assign({},r,{id:Date.now()+""})];
+    setRecords(next);try{localStorage.setItem("bk_diary",JSON.stringify(next))}catch{}if(fbSaveMisc)fbSaveMisc("diary",next);
+    setForm(null);
+  };
+  const delRec=id=>{
+    const next=records.filter(x=>x.id!==id);
+    setRecords(next);try{localStorage.setItem("bk_diary",JSON.stringify(next))}catch{}if(fbSaveMisc)fbSaveMisc("diary",next);
+    setConfirmDel(null);
+  };
+  const months=["\u0399\u03b1\u03bd","\u03a6\u03b5\u03b2","\u039c\u03b1\u03c1","\u0391\u03c0\u03c1","\u039c\u03b1\u03ca","\u0399\u03bf\u03c5\u03bd","\u0399\u03bf\u03c5\u03bb","\u0391\u03c5\u03b3","\u03a3\u03b5\u03c0","\u039f\u03ba\u03c4","\u039d\u03bf\u03b5","\u0394\u03b5\u03ba"];
+  const monthRange=(f,t)=>{if(!f&&!t)return "";if(f===t||!t)return months[+f-1]||f;return (months[+f-1]||f)+" \u2013 "+(months[+t-1]||t);};
+  const sorted=[...records].sort((a,b)=>(+a.num||0)-(+b.num||0));
+  const emptyForm={num:"",title:"",monthFrom:"",monthTo:"",notes:"",id:null};
+  return div({style:asView?{padding:"0 0 80px",background:G.wax,minHeight:"100%"}:{position:"fixed",inset:0,zIndex:500,background:"#0006",display:"flex",alignItems:"flex-end",justifyContent:"center"}},
+    div({style:asView?{padding:"8px 4px"}:{background:G.white,borderRadius:"20px 20px 0 0",padding:"16px 16px 40px",width:"100%",maxWidth:720,maxHeight:"90vh",overflowY:"auto",boxShadow:"0 -8px 32px #0004"}},
+      div({style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}},
+        div({style:{fontWeight:900,fontSize:18,color:G.amber}},"\ud83d\udcd3 \u0397\u03bc\u03b5\u03c1\u03bf\u03bb\u03cc\u03b3\u03b9\u03bf"),
+        btn({onTouchEnd:e=>{e.preventDefault();setForm({...emptyForm});},onClick:e=>{if(e.pointerType!=="touch")setForm({...emptyForm});},
+          style:{padding:"5px 12px",borderRadius:8,border:"1.5px solid "+G.honey,background:"transparent",cursor:"pointer",fontWeight:700,fontSize:13,color:G.amber,fontFamily:"Georgia,serif",WebkitTapHighlightColor:"transparent"}},"+ \u039d\u03ad\u03b1")
+      ),
+      sorted.length===0?div({style:{textAlign:"center",padding:"40px 0",color:G.textLight,fontSize:13}},"\u0394\u03b5\u03bd \u03c5\u03c0\u03ac\u03c1\u03c7\u03bf\u03c5\u03bd \u03ba\u03b1\u03c4\u03b1\u03b3\u03c1\u03b1\u03c6\u03ad\u03c2 \u03b1\u03ba\u03cc\u03bc\u03b1."):null,
+      div({style:{display:"flex",flexDirection:"column",gap:8}},
+        ...sorted.map(r=>h(SwipeCard,{key:r.id,onDelete:()=>setConfirmDel(r.id),onEdit:()=>setForm({...r})},
+          div({style:{padding:"10px 14px",background:G.white,borderRadius:10,border:"1px solid "+G.honey+"66"}},
+            div({style:{display:"flex",alignItems:"center",gap:8}},
+              span({style:{minWidth:24,height:24,borderRadius:"50%",background:G.honey,display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,color:G.beeBlack,flexShrink:0}},r.num||"—"),
+              div({style:{flex:1}},
+                r.title?div({style:{fontSize:14,fontWeight:700,color:G.text}},r.title):null,
+                (r.monthFrom||r.monthTo)?div({style:{fontSize:12,color:G.textLight,marginTop:2}},"\ud83d\udcc5 "+monthRange(r.monthFrom,r.monthTo)):null,
+                r.notes&&r.notes.trim()?div({style:{fontSize:11,color:G.textLight,fontStyle:"italic",marginTop:3}},"\u270e "+r.notes):null
+              )
+            )
+          )
+        ))
+      ),
+      form?div({style:{position:"fixed",inset:0,zIndex:700,background:"#0007",display:"flex",alignItems:"flex-end",justifyContent:"center"},onClick:()=>setForm(null)},
+        div({style:{background:G.white,borderRadius:"20px 20px 0 0",padding:"20px",width:"100%",maxWidth:720,boxShadow:"0 -8px 32px #0004"},onClick:e=>e.stopPropagation()},
+          div({style:{fontWeight:800,fontSize:16,color:G.amber,marginBottom:14}},form.id?"\u270f\ufe0f \u0395\u03c0\u03b5\u03be\u03b5\u03c1\u03b3\u03b1\u03c3\u03af\u03b1":"\ud83d\udcd3 \u039d\u03ad\u03b1 \u0395\u03b3\u03b3\u03c1\u03b1\u03c6\u03ae"),
+          div({style:{display:"flex",gap:8,marginBottom:10}},
+            div({style:{flex:"0 0 80px"}},
+              div({style:{fontSize:11,fontWeight:700,color:G.textLight,marginBottom:4}},"\u0391\u03c1\u03b9\u03b8\u03bc\u03cc\u03c2"),
+              inp({type:"number",min:"1",value:form.num||"",onChange:e=>setForm(p=>({...p,num:e.target.value})),
+                placeholder:"1",style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid "+G.amber,background:G.wax,fontSize:16,fontWeight:700,fontFamily:"Georgia,serif"}})
+            ),
+            div({style:{flex:1}},
+              div({style:{fontSize:11,fontWeight:700,color:G.textLight,marginBottom:4}},"\u03a4\u03af\u03c4\u03bb\u03bf\u03c2"),
+              inp({type:"text",value:form.title||"",onChange:e=>setForm(p=>({...p,title:e.target.value})),
+                placeholder:"\u03a4\u03af\u03c4\u03bb\u03bf\u03c2 \u03b5\u03b3\u03b3\u03c1\u03b1\u03c6\u03ae\u03c2...",autoFocus:true,
+                style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid "+G.waxDark,background:G.wax,fontSize:13,fontFamily:"Georgia,serif"}})
+            )
+          ),
+          div({style:{display:"flex",gap:8,marginBottom:10}},
+            div({style:{flex:1}},
+              div({style:{fontSize:11,fontWeight:700,color:G.textLight,marginBottom:4}},"\u0391\u03c0\u03cc (\u03bc\u03ae\u03bd\u03b1\u03c2)"),
+              sel({value:form.monthFrom||"",onChange:e=>setForm(p=>({...p,monthFrom:e.target.value})),
+                style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid "+G.waxDark,background:G.wax,fontSize:13,fontFamily:"Georgia,serif"}},
+                opt({value:""},"\u2014"),...months.map((m,i)=>opt({key:i,value:String(i+1)},m)))
+            ),
+            div({style:{flex:1}},
+              div({style:{fontSize:11,fontWeight:700,color:G.textLight,marginBottom:4}},"\u0388\u03c9\u03c2 (\u03bc\u03ae\u03bd\u03b1\u03c2)"),
+              sel({value:form.monthTo||"",onChange:e=>setForm(p=>({...p,monthTo:e.target.value})),
+                style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid "+G.waxDark,background:G.wax,fontSize:13,fontFamily:"Georgia,serif"}},
+                opt({value:""},"\u2014"),...months.map((m,i)=>opt({key:i,value:String(i+1)},m)))
+            )
+          ),
+          div({style:{marginBottom:16}},
+            div({style:{fontSize:11,fontWeight:700,color:G.textLight,marginBottom:4}},"\u03a3\u03b7\u03bc\u03b5\u03b9\u03ce\u03c3\u03b5\u03b9\u03c2 (\u03c0\u03c1\u03bf\u03b1\u03b9\u03c1\u03b5\u03c4\u03b9\u03ba\u03cc)"),
+            h("textarea",{value:form.notes||"",onChange:e=>setForm(p=>({...p,notes:e.target.value})),
+              rows:3,placeholder:"\u03c3\u03b7\u03bc\u03b5\u03b9\u03ce\u03c3\u03b5\u03b9\u03c2...",
+              style:{width:"100%",padding:"8px 10px",borderRadius:8,border:"1px solid "+G.waxDark,background:G.wax,fontSize:13,fontFamily:"Georgia,serif",resize:"vertical"}})
+          ),
+          div({style:{display:"flex",gap:10}},
+            btn({onClick:()=>setForm(null),style:{flex:1,padding:"12px",borderRadius:10,border:"1px solid "+G.waxDark,background:G.white,cursor:"pointer",fontWeight:700,fontSize:14,color:G.textLight,fontFamily:"Georgia,serif"}},"\u0391\u03ba\u03cd\u03c1\u03c9\u03c3\u03b7"),
+            btn({onClick:()=>{if(!form.num&&!form.title&&!form.notes)return;saveRec(form);},
+              style:{flex:2,padding:"12px",borderRadius:10,border:"none",background:G.honey,cursor:"pointer",fontWeight:700,fontSize:14,color:G.beeBlack,fontFamily:"Georgia,serif"}},"\ud83d\udcbe \u0391\u03c0\u03bf\u03b8\u03ae\u03ba\u03b5\u03c5\u03c3\u03b7")
+          )
+        )
+      ):null,
+      confirmDel?div({style:{position:"fixed",inset:0,zIndex:800,background:"#0007",display:"flex",alignItems:"center",justifyContent:"center"}},
+        div({style:{background:G.white,borderRadius:16,padding:"24px",maxWidth:300,width:"90%",textAlign:"center"}},
+          div({style:{fontSize:32,marginBottom:8}},"\ud83d\uddd1"),
+          div({style:{fontWeight:700,fontSize:15,marginBottom:16,color:G.text}},"\u0394\u03b9\u03b1\u03b3\u03c1\u03b1\u03c6\u03ae \u03b5\u03b3\u03b3\u03c1\u03b1\u03c6\u03ae\u03c2;"),
+          div({style:{display:"flex",gap:10}},
+            btn({onClick:()=>setConfirmDel(null),style:{flex:1,padding:"10px",borderRadius:8,border:"1px solid "+G.waxDark,background:G.white,cursor:"pointer",fontWeight:700,color:G.textLight,fontFamily:"Georgia,serif"}},"\u0386\u03ba\u03c5\u03c1\u03bf"),
+            btn({onClick:()=>delRec(confirmDel),style:{flex:1,padding:"10px",borderRadius:8,border:"none",background:G.red,cursor:"pointer",fontWeight:700,color:"#fff",fontFamily:"Georgia,serif"}},"\u0394\u03b9\u03b1\u03b3\u03c1\u03b1\u03c6\u03ae")
+          )
+        )
+      ):null
+    )
+  );
+}
+
 // FlowerPanel — Ανθοφορίες
 function FlowerPanel({asView,fbSaveMisc,fbWatchMisc}){
   const [records,setRecords]=useState(()=>{try{const v=localStorage.getItem("bk_flowers");return v?JSON.parse(v):[]}catch{return[]}});
@@ -3344,6 +3617,11 @@ function FinancePanel({onClose,asView,fbSaveMisc,fbWatchMisc}){
   const [addingCat,setAddingCat]=useState(false);
   const [showCats,setShowCats]=useState(false);
   const [openCat,setOpenCat]=useState(null);
+  // Helper: εκτελεί action μόνο αν δεν έγινε scroll
+  const touchRef=React.useRef({startY:0,moved:false});
+  const onTouchStartTrack=e=>{touchRef.current={startY:e.touches[0].clientY,moved:false};};
+  const onTouchMoveTrack=e=>{if(Math.abs(e.touches[0].clientY-touchRef.current.startY)>8)touchRef.current.moved=true;};
+  const safeTouchEnd=(fn)=>e=>{if(!touchRef.current.moved){e.preventDefault();fn();}};
   const [yearStart,setYearStart]=useState(()=>{try{return +localStorage.getItem("bk_finance_yearstart")||9}catch{return 9}});
   const [showYearSetting,setShowYearSetting]=useState(false);
   const [viewYear,setViewYear]=useState(null);
@@ -3379,10 +3657,6 @@ function FinancePanel({onClose,asView,fbSaveMisc,fbWatchMisc}){
   const curBeeYear=now.getMonth()+1>=yearStart?now.getFullYear():now.getFullYear()-1;
   const recsByYear={};
   records.forEach(r=>{const y=getBeeYear(r.date);if(y!==null){if(!recsByYear[y])recsByYear[y]=[];recsByYear[y].push(r);}});
-  const curRecs=recsByYear[curBeeYear]||[];
-  const curInc=curRecs.filter(r=>r.type==="income").reduce((s,r)=>s+(+r.amount||0),0);
-  const curExp=curRecs.filter(r=>r.type==="expense").reduce((s,r)=>s+(+r.amount||0),0);
-  const curBal=curInc-curExp;
   const MONTHS_SHORT=["Ιαν","Φεβ","Μαρ","Απρ","Μαϊ","Ιουν","Ιουλ","Αυγ","Σεπ","Οκτ","Νοε","Δεκ"];
   const allBeeYears=[...new Set([curBeeYear,...Object.keys(recsByYear).map(Number)])].sort((a,b)=>b-a);
   const activeYear=viewYear!==null&&allBeeYears.includes(viewYear)?viewYear:curBeeYear;
@@ -3523,7 +3797,8 @@ function FinancePanel({onClose,asView,fbSaveMisc,fbWatchMisc}){
           const isOpen=openCat===c;
           return div({key:c},
             btn({
-              onTouchEnd:e=>{e.preventDefault();setOpenCat(isOpen?null:c);},
+              onTouchStart:onTouchStartTrack,onTouchMove:onTouchMoveTrack,
+              onTouchEnd:safeTouchEnd(()=>setOpenCat(isOpen?null:c)),
               onClick:e=>{if(e.pointerType!=="touch")setOpenCat(isOpen?null:c);},
               style:{width:"100%",padding:"10px 14px",borderRadius:isOpen?"10px 10px 0 0":10,
                 border:"1px solid "+borderCol,background:isOpen?bgCol:G.white,
@@ -3841,7 +4116,30 @@ function getActionVal(actions,lbl){
 
 
 function App(){
-  const [authUser,setAuthUser]=useState(undefined); // undefined=loading, null=not logged in
+  const [authUser,setAuthUser]=useState(undefined);
+  // Global scroll detection — αποτρέπει κατά λάθος taps κατά το scroll
+  useEffect(()=>{
+    let scrolling=false;
+    let startY=0;
+    const onStart=e=>{startY=e.touches?e.touches[0].clientY:0;scrolling=false;};
+    const onMove=e=>{if(e.touches&&Math.abs(e.touches[0].clientY-startY)>10)scrolling=true;};
+    const onEnd=e=>{
+      if(scrolling){
+        // Σταμάτα το click που θα ακολουθήσει το touchend
+        const block=ev=>{ev.stopPropagation();ev.preventDefault();};
+        document.addEventListener("click",block,{capture:true,once:true});
+        scrolling=false;
+      }
+    };
+    document.addEventListener("touchstart",onStart,{passive:true});
+    document.addEventListener("touchmove",onMove,{passive:true});
+    document.addEventListener("touchend",onEnd,{passive:false});
+    return ()=>{
+      document.removeEventListener("touchstart",onStart);
+      document.removeEventListener("touchmove",onMove);
+      document.removeEventListener("touchend",onEnd);
+    };
+  },[]); // undefined=loading, null=not logged in
   const [groupId,setGroupId]=useState(null);
   const [groupRole,setGroupRole]=useState(null); // admin | viewer
   const [groupInfo,setGroupInfo]=useState(null);
@@ -4148,8 +4446,10 @@ function AppMain({groupId,groupRole,isViewer,authUser,groupInfo,onSignOut}){
             {id:"map",label:"🗺 Κάτοψη"},
             {id:"finance",label:"⚖️ Οικονομικά"},
             {id:"flowers",label:"🌸 Ανθοφορίες"},
+            {id:"diary",label:"📓 Ημερολόγιο"},
             {id:"harvest",label:"🍯 Τρύγος"},
             {id:"log",label:"📅 Επιθεωρήσεις"},
+            {id:"info",label:"📌 Πληροφορίες"},
             {id:"help",label:"❓"},
           ].map(t=>btn({key:t.id,
             onTouchEnd:e=>{e.preventDefault();setView(t.id);setSelH(null);},
@@ -4277,8 +4577,10 @@ function AppMain({groupId,groupRole,isViewer,authUser,groupInfo,onSignOut}){
       view==="log"?h(InspLogPanel,{hives,insps,onClose:()=>setView("dashboard"),asView:true,fbSaveMisc,fbWatchMisc,onSaveNote:(date,note)=>{setInspLogNotes(p=>({...p,[date]:note}));}}):null,
       view==="finance"?h(FinancePanel,{onClose:()=>setView("dashboard"),asView:true,fbSaveMisc,fbWatchMisc}):null,
       view==="flowers"?h(FlowerPanel,{asView:true,fbSaveMisc,fbWatchMisc}):null,
+      view==="diary"?h(DiaryPanel,{asView:true,fbSaveMisc,fbWatchMisc}):null,
       view==="harvest"?h(HarvestPanel,{hives,asView:true,fbSaveMisc,fbWatchMisc}):null,
       view==="map"?h(ApiarySiteMap,{hives,insps,fbSaveMisc,fbWatchMisc}):null,
+      view==="info"?h(InfoPanel,{asView:true,fbSaveMisc,fbWatchMisc}):null,
       view==="help"?h(HelpPanel,{asView:true}):null,
       // Single hive — summary + date filter + history
       view==="hive"&&cur?h(HiveHistory,{hive:cur,insps,hives,onEdit:insp=>{setEditI(insp);setShowIF(false)},onDelete:delI,onNewInsp:()=>{setEditI(null);setShowIF(true);}}):null,
